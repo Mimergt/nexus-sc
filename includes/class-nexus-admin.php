@@ -25,7 +25,7 @@ class Nexus_Admin {
 
         // ── Subscriptions list (HPOS) ─────────────────────────────────────────
         add_filter( 'woocommerce_subscription_list_table_columns',           array( __CLASS__, 'add_subscription_column' ) );
-        add_action( 'woocommerce_subscription_list_table_column_content',    array( __CLASS__, 'render_hpos_subscription_column' ), 10, 3 );
+        add_filter( 'woocommerce_subscription_list_table_column_content',    array( __CLASS__, 'filter_hpos_subscription_column_content' ), 10, 3 );
 
         // ── Orders list (classic CPT) ─────────────────────────────────────────
         add_filter( 'manage_edit-shop_order_columns',       array( __CLASS__, 'add_order_column' ) );
@@ -33,7 +33,7 @@ class Nexus_Admin {
 
         // ── Orders list (HPOS) ───────────────────────────────────────────────
         add_filter( 'woocommerce_shop_order_list_table_columns',          array( __CLASS__, 'add_order_column' ) );
-        add_action( 'woocommerce_shop_order_list_table_column_content',   array( __CLASS__, 'render_hpos_order_column' ), 10, 3 );
+        add_filter( 'woocommerce_shop_order_list_table_column_content',   array( __CLASS__, 'filter_hpos_order_column_content' ), 10, 3 );
 
         // ── Single subscription – metabox (classic CPT) ───────────────────────
         add_action( 'add_meta_boxes',                            array( __CLASS__, 'register_meta_box' ) );
@@ -63,12 +63,12 @@ class Nexus_Admin {
         self::echo_location_badge( $subscription->get_meta( Nexus_Subscription::META_KEY ) );
     }
 
-    /** HPOS column renderer. */
-    public static function render_hpos_subscription_column( $column, $subscription, $columns ) {
+    /** HPOS column content filter. */
+    public static function filter_hpos_subscription_column_content( $content, $column, $subscription ) {
         if ( 'nexus_ghl_location' !== $column ) {
-            return;
+            return $content;
         }
-        self::echo_location_badge( $subscription->get_meta( Nexus_Subscription::META_KEY ) );
+        return self::get_location_badge_html( $subscription->get_meta( Nexus_Subscription::META_KEY ) );
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -92,12 +92,12 @@ class Nexus_Admin {
         self::echo_location_badge( $order->get_meta( Nexus_Subscription::META_KEY ) );
     }
 
-    /** HPOS order column renderer. */
-    public static function render_hpos_order_column( $column, $order, $columns ) {
+    /** HPOS order column content filter. */
+    public static function filter_hpos_order_column_content( $content, $column, $order ) {
         if ( 'nexus_ghl_location' !== $column ) {
-            return;
+            return $content;
         }
-        self::echo_location_badge( $order->get_meta( Nexus_Subscription::META_KEY ) );
+        return self::get_location_badge_html( $order->get_meta( Nexus_Subscription::META_KEY ) );
     }
 
     // ────────────────────────────────────────────────────────────────────────
@@ -177,10 +177,20 @@ class Nexus_Admin {
      * @param string $location_id
      */
     private static function echo_location_badge( $location_id ) {
+        echo self::get_location_badge_html( $location_id );
+    }
+
+    /**
+     * Build badge HTML for list tables.
+     *
+     * @param string $location_id
+     * @return string
+     */
+    private static function get_location_badge_html( $location_id ) {
         if ( $location_id ) {
-            echo '<code style="font-size:11px;">' . esc_html( $location_id ) . '</code>';
-        } else {
-            echo '<span class="na">&ndash;</span>';
+            return '<code style="font-size:11px;">' . esc_html( $location_id ) . '</code>';
         }
+
+        return '<span class="na">&ndash;</span>';
     }
 }
